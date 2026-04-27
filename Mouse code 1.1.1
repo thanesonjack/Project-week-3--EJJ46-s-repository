@@ -1,0 +1,61 @@
+// ===== SENSOR PINS =====
+const int leftSensorPin  = A6;
+const int rightSensorPin = A7;
+
+// ===== MOTOR PWM PINS =====
+const int leftMotorPin  = D7;
+const int rightMotorPin = D8;
+
+// ===== PWM SETTINGS =====
+const int pwmFreq = 20000;
+const int pwmResolution = 8;
+const int leftChannel = 0;
+const int rightChannel = 1;
+
+// ===== CONTROL PARAMETERS =====
+int baseSpeed = 150;
+float Kp = 0.5;
+
+void setup() {
+
+  Serial.begin(115200);
+
+  // Setup PWM channels
+  ledcSetup(leftChannel, pwmFreq, pwmResolution);
+  ledcSetup(rightChannel, pwmFreq, pwmResolution);
+
+  ledcAttachPin(leftMotorPin, leftChannel);
+  ledcAttachPin(rightMotorPin, rightChannel);
+}
+
+void loop() {
+
+  // Read sensors
+  int leftSignal = analogRead(leftSensorPin);
+  int rightSignal = analogRead(rightSensorPin);
+
+  // Calculate error
+  int error = leftSignal - rightSignal;
+
+  // Calculate motor speeds
+  int leftSpeed  = baseSpeed + Kp * error;
+  int rightSpeed = baseSpeed - Kp * error;
+
+  // Constrain PWM range
+  leftSpeed = constrain(leftSpeed, 0, 255);
+  rightSpeed = constrain(rightSpeed, 0, 255);
+
+  // Output PWM
+  ledcWrite(leftChannel, leftSpeed);
+  ledcWrite(rightChannel, rightSpeed);
+
+  // Debug
+  Serial.print("L:");
+  Serial.print(leftSignal);
+  Serial.print(" R:");
+  Serial.print(rightSignal);
+  Serial.print(" E:");
+  Serial.println(error);
+
+  delay(10);
+}
